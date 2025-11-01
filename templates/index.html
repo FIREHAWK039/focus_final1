@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Focus Detector</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>Focus Bubble</h1>
+      <div class="video-panel">
+        <img id="video" src="/video_feed" alt="video stream">
+        <div id="overlay">
+          <div id="focus">Focus: --%</div> 
+          <div id="focus-alert" style="display:none;">Your focus is fading!</div>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="refresh">Refresh Focus</button>
+        <button id="score">Score</button>
+        <div id="score-result" style="margin-left:16px;margin-top: 30px;  font-weight:bold;"></div>
+      </div>
+    </div>
+
+    <script>
+      let belowThresholdStart = null;
+      const threshold = 60;
+      const alertDuration = 10; // seconds
+
+  let scoreValues = [];
+  let scoreTimestamps = [];
+
+      async function refreshFocus(){
+        try{
+          const res = await fetch('/focus');
+          const data = await res.json();
+          const f = data.focus;
+          document.getElementById('focus').innerText = `Focus: ${f !== null ? f.toFixed(1) + '%' : '--'}`;
+          const now = Date.now();
+          if (typeof f === 'number' && f < threshold) {
+            if (belowThresholdStart === null) {
+              belowThresholdStart = now;
+            }
+            const secondsBelow = (now - belowThresholdStart) / 1000;
+            if (secondsBelow >= alertDuration) {
+              document.getElementById('focus-alert').style.display = 'block';
+            } else {
+              document.getElementById('focus-alert').style.display = 'none';
+            }
+          } else {
+            belowThresholdStart = null;
+            document.getElementById('focus-alert').style.display = 'none';
+          }
+          // scoring logic: always keep last 1 min of data
+          if (typeof f === 'number') {
+            scoreValues.push(f);
+            scoreTimestamps.push(now);
+            // Remove data older than 1 min
+            while (scoreTimestamps.length > 0 && now - scoreTimestamps[0] > 60000) {
+              scoreTimestamps.shift();
+              scoreValues.shift();
+            }
+          }
+        }catch(e){
+          document.getElementById('focus').innerText = 'Focus: --%';
+          belowThresholdStart = null;
+          document.getElementById('focus-alert').style.display = 'none';
+        }
+      }
+
+      // When refresh is clicked, reset score data and start timer from now
+      document.getElementById('refresh').addEventListener('click', function() {
+        scoreValues = [];
+        scoreTimestamps = [];
+        refreshFocus();
+        // Optionally clear score result
+        document.getElementById('score-result').innerText = '';
+        // Mark the new start time for scoring
+        window.scoreStartTime = Date.now();
+      });
+
+      document.getElementById('score').addEventListener('click', function() {
+        const now = Date.now();
+        // Only use values since last refresh
+        const startTime = window.scoreStartTime || (scoreTimestamps.length > 0 ? scoreTimestamps[0] : now);
+        const validValues = [];
+        for (let i = 0; i < scoreTimestamps.length; ++i) {
+          if (scoreTimestamps[i] >= startTime) {
+            validValues.push(scoreValues[i]);
+          }
+        }
+        if (validValues.length === 0 || now - startTime < 60000) {
+          document.getElementById('score-result').innerText = 'Wait till 1 min.';
+        } else {
+          document.getElementById('score-result').innerText = `Your 1-min focus score: ${(validValues.reduce((a,b)=>a+b,0)/validValues.length).toFixed(1)}%`;
+        }
+      });
+
+      // poll every 2s
+      setInterval(refreshFocus, 2000);
+      // initial
+      refreshFocus();
+    </script>
+  </body>
+</html>

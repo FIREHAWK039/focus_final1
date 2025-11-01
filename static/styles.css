@@ -1,0 +1,16 @@
+body{font-family: Arial, sans-serif;background:url(images/360_F_471002062_tCBbTqeeMhHgMfCW86mQhdgpETooy3ID.jpg);color:#f5f6f8;margin:0;padding:20px}
+.container{max-width:500px;margin:0 auto;border-radius: 20%;}
+h1{text-align:center}
+.video-panel{position:relative;border:1px solid #e70fe3;padding:3px;background:#000000}
+.video-panel img{width:100%;height:auto;display:block}
+#overlay{position:absolute;left:16px;top:16px}
+#focus{background:rgba(0,0,0,0.6);padding:8px 12px;border-radius:6px;font-size:18px;display:none;}
+.focus-alert,#focus-alert{margin-top:30px;background:#ff5252;color:#fff;padding:8px 12px;border-radius:6px;font-size:18px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.2);text-align:center;}
+.controls{margin-top:12px;text-align:center}
+button{padding:8px 14px;border-radius:6px;border:none;background:#cf19d2;color:#fff;cursor:pointer}
+button:hover{background:#135ea6}
+#score{
+    padding: 8px 30px 8px 30px;
+    margin-left: 20px;
+    
+}
